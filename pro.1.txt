@@ -1,0 +1,179 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <regex>
+using namespace std;
+
+class LibraryItem {
+private:
+    string title, author, dueDate;
+
+public:
+    // Constructor
+    LibraryItem(string t, string a, string d) : title(t), author(a), dueDate(d) {}
+
+    // Virtual destructor
+    virtual ~LibraryItem() {}
+
+    // Getters (Encapsulation)
+    string getTitle() const { return title; }
+    string getAuthor() const { return author; }
+    string getDueDate() const { return dueDate; }
+
+    // Setters (Encapsulation)
+    void setTitle(string newTitle) { title = newTitle; }
+    void setAuthor(string newAuthor) { author = newAuthor; }
+    void setDueDate(string newDueDate) { dueDate = newDueDate; }
+
+    // Abstract methods (Abstraction)
+    virtual void checkOut() = 0;
+    virtual void returnItem() = 0;
+    virtual void displayDetails() const = 0;
+};
+
+// ================= Book Class =================
+class Book : public LibraryItem {
+private:
+    string isbn;
+
+public:
+    Book(string t, string a, string d, string i) : LibraryItem(t, a, d) {
+        if (!regex_match(i, regex("\\d{3}-\\d{10}")))
+            throw invalid_argument("Invalid ISBN format.");
+        isbn = i;
+    }
+
+    void checkOut() override {
+        cout << "Book '" << getTitle() << "' checked out.\n";
+    }
+
+    void returnItem() override {
+        cout << "Book '" << getTitle() << "' returned.\n";
+    }
+
+    void displayDetails() const override {
+        cout << "[Book] " << getTitle() << " | ISBN: " << isbn << endl;
+    }
+};
+
+// ================= DVD Class =================
+class DVD : public LibraryItem {
+private:
+    int duration;
+
+public:
+    DVD(string t, string a, string d, int dur) : LibraryItem(t, a, d) {
+        if (dur < 0)
+            throw invalid_argument("Duration cannot be negative.");
+        duration = dur;
+    }
+
+    void checkOut() override {
+        cout << "DVD '" << getTitle() << "' checked out.\n";
+    }
+
+    void returnItem() override {
+        cout << "DVD '" << getTitle() << "' returned.\n";
+    }
+
+    void displayDetails() const override {
+        cout << "[DVD] " << getTitle() << " | Duration: " << duration << " mins\n";
+    }
+};
+
+// ================= Magazine Class =================
+class Magazine : public LibraryItem {
+private:
+    int issueNumber;
+
+public:
+    Magazine(string t, string a, string d, int issue) : LibraryItem(t, a, d) {
+        if (issue < 0)
+            throw invalid_argument("Issue number cannot be negative.");
+        issueNumber = issue;
+    }
+
+    void checkOut() override {
+        cout << "Magazine '" << getTitle() << "' checked out.\n";
+    }
+
+    void returnItem() override {
+        cout << "Magazine '" << getTitle() << "' returned.\n";
+    }
+
+    void displayDetails() const override {
+        cout << "[Magazine] " << getTitle() << " | Issue: " << issueNumber << endl;
+    }
+};
+
+// ================= Main Function =================
+int main() {
+    vector<LibraryItem*> items;
+    int choice;
+
+    while (true) {
+        cout << "\n===== Library Menu =====\n";
+        cout << "1. Add Book\n2. Add DVD\n3. Add Magazine\n4. Show All Items\n5. Check Out\n6. Return Item\n7. Exit\n";
+        cout << "Enter choice: ";
+        cin >> choice;
+        cin.ignore();  // Clear newline
+
+        try {
+            if (choice == 1) {
+                string t, a, d, i;
+                cout << "Enter Title: "; getline(cin, t);
+                cout << "Enter Author: "; getline(cin, a);
+                cout << "Enter Due Date: "; getline(cin, d);
+                cout << "Enter ISBN (e.g., 123-1234567890): "; getline(cin, i);
+                items.push_back(new Book(t, a, d, i));
+            }
+            else if (choice == 2) {
+                string t, a, d; int dur;
+                cout << "Enter Title: "; getline(cin, t);
+                cout << "Enter Author: "; getline(cin, a);
+                cout << "Enter Due Date: "; getline(cin, d);
+                cout << "Enter Duration (in minutes): "; cin >> dur; cin.ignore();
+                items.push_back(new DVD(t, a, d, dur));
+            }
+            else if (choice == 3) {
+                string t, a, d; int issue;
+                cout << "Enter Title: "; getline(cin, t);
+                cout << "Enter Author: "; getline(cin, a);
+                cout << "Enter Due Date: "; getline(cin, d);
+                cout << "Enter Issue Number: "; cin >> issue; cin.ignore();
+                items.push_back(new Magazine(t, a, d, issue));
+            }
+            else if (choice == 4) {
+                for (int i = 0; i < items.size(); ++i) {
+                    cout << i << ". ";
+                    items[i]->displayDetails();
+                }
+            }
+            else if (choice == 5 || choice == 6) {
+                int index;
+                cout << "Enter item index: ";
+                cin >> index; cin.ignore();
+                if (index < 0 || index >= items.size())
+                    throw out_of_range("Invalid index.");
+                if (choice == 5) items[index]->checkOut();
+                else items[index]->returnItem();
+            }
+            else if (choice == 7) {
+                cout << "Exiting program.\n";
+                break;
+            }
+            else {
+                cout << "Invalid option.\n";
+            }
+        }
+        catch (exception &e) {
+            cout << "Error: " << e.what() << endl;
+        }
+    }
+
+    // Clean up memory
+    for (auto item : items)
+        delete item;
+
+    return 0;
+}
